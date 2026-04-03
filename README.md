@@ -2,6 +2,10 @@
   <img src="logo-horizontal.svg" alt="Logsnare" width="400">
 </p>
 
+<p align="center">
+  <em>The only Kubernetes log agent with intelligent error context capture and 9 pluggable storage backends — from PostgreSQL to Azure, AWS, and GCP cloud logging.</em>
+</p>
+
 [![Helm](https://img.shields.io/badge/Helm-v3-blue.svg)](https://helm.sh)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-1.24%2B-blue.svg)](https://kubernetes.io)
