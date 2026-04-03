@@ -127,10 +127,6 @@ kubectl delete namespace logsnare
 - [Capacity Planning](https://github.com/devopsarts/logsnare/wiki/Capacity-Planning) - Resource sizing guidelines
 - [Troubleshooting](https://github.com/devopsarts/logsnare/wiki/Troubleshooting) - Common issues and solutions
 
-**Local Docs:**
-- [Architecture Documentation](docs/ARCHITECTURE.md)
-- [Full Values Reference](charts/logsnare-engine/values.yaml)
-
 ## Requirements
 
 - Kubernetes 1.24+
