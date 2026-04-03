@@ -1,5 +1,3 @@
-# Logsnare Helm Charts
-
 <p align="center">
   <img src="logo-horizontal.svg" alt="Logsnare" width="400">
 </p>
