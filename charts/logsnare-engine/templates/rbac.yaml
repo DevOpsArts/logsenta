@@ -1,0 +1,81 @@
+{{- if .Values.serviceAccount.create }}
+# ServiceAccount for the monitor agent
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "logsnare.serviceAccountName" . }}
+  namespace: {{ include "logsnare.namespace" . }}
+  labels:
+    {{- include "logsnare.labels" . | nindent 4 }}
+    app.kubernetes.io/component: monitoring
+{{- end }}
+---
+{{- if .Values.rbac.create }}
+# ClusterRole with minimal permissions (least privilege)
+# SECURITY_NOTE: Only grants read access to pods and logs
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "logsnare.fullname" . }}
+  labels:
+    {{- include "logsnare.labels" . | nindent 4 }}
+rules:
+  # Permission to list and get pods
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  # Permission to read pod logs
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list", "watch"]
+---
+# ClusterRoleBinding to grant permissions across all namespaces
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "logsnare.fullname" . }}
+  labels:
+    {{- include "logsnare.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "logsnare.serviceAccountName" . }}
+    namespace: {{ include "logsnare.namespace" . }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "logsnare.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
+---
+{{- if .Values.leaderElection.enabled }}
+# Role for leader election (namespaced - leases)
+# SECURITY_NOTE: Only grants access to leases in the logsnare namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "logsnare.fullname" . }}-leader-election
+  namespace: {{ include "logsnare.namespace" . }}
+  labels:
+    {{- include "logsnare.labels" . | nindent 4 }}
+rules:
+  # Permission to manage leases for leader election
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+# RoleBinding for leader election
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "logsnare.fullname" . }}-leader-election
+  namespace: {{ include "logsnare.namespace" . }}
+  labels:
+    {{- include "logsnare.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "logsnare.serviceAccountName" . }}
+    namespace: {{ include "logsnare.namespace" . }}
+roleRef:
+  kind: Role
+  name: {{ include "logsnare.fullname" . }}-leader-election
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}
+{{- end }}

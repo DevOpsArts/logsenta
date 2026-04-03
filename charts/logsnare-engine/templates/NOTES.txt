@@ -1,0 +1,52 @@
+====================================================================
+   _                                        
+  | |    ___   __ _ ___ _ __   __ _ _ __ ___ 
+  | |   / _ \ / _` / __| '_ \ / _` | '__/ _ \
+  | |__| (_) | (_| \__ \ | | | (_| | | |  __/
+  |_____\___/ \__, |___/_| |_|\__,_|_|  \___|
+              |___/                           
+====================================================================
+
+Logsnare has been deployed successfully!
+
+Release: {{ .Release.Name }}
+Namespace: {{ include "logsnare.namespace" . }}
+Storage Type: {{ .Values.storage.type }}
+
+To check the status of the deployment:
+  kubectl get pods -n {{ include "logsnare.namespace" . }} -l app={{ include "logsnare.name" . }}
+
+To view logs from the monitor:
+  kubectl logs -n {{ include "logsnare.namespace" . }} -l app={{ include "logsnare.name" . }} -f
+
+To check the configuration:
+  kubectl get configmap {{ include "logsnare.configmapName" . }} -n {{ include "logsnare.namespace" . }} -o yaml
+
+{{- if include "logsnare.secretsEnabled" . }}
+
+SECURITY NOTE:
+The following database connections are configured:
+{{- if .Values.connections.mongodb.enabled }}
+  - MongoDB: {{ .Values.connections.mongodb.host }}:{{ .Values.connections.mongodb.port }}
+{{- end }}
+{{- if .Values.connections.mysql.enabled }}
+  - MySQL: {{ .Values.connections.mysql.host }}:{{ .Values.connections.mysql.port }}
+{{- end }}
+{{- if .Values.connections.influxdb.enabled }}
+  - InfluxDB: {{ .Values.connections.influxdb.url }}
+{{- end }}
+{{- if .Values.connections.elasticsearch.enabled }}
+  - Elasticsearch: {{ .Values.connections.elasticsearch.hosts }}
+{{- end }}
+
+Credentials are stored in Secret: {{ include "logsnare.secretName" . }}
+{{- end }}
+
+Monitored namespaces:
+{{- range .Values.config.namespaces }}
+  - {{ . }}
+{{- end }}
+
+NOTE: This deployment uses emptyDir for log storage.
+Logs will be lost when the pod is restarted.
+For persistent storage, configure an external database backend.

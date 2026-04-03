@@ -1,0 +1,287 @@
+# Logsnare - Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "logsnare.fullname" . }}
+  namespace: {{ include "logsnare.namespace" . }}
+  labels:
+    {{- include "logsnare.labels" . | nindent 4 }}
+    app.kubernetes.io/component: monitoring
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "logsnare.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "logsnare.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        # Force pod restart on config change
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- if include "logsnare.secretsEnabled" . }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "logsnare.serviceAccountName" . }}
+      
+      # SECURITY_NOTE: Allow graceful shutdown for clean resource cleanup
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds | default 30 }}
+      
+      # SECURITY_NOTE: Security context for the pod
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      
+      containers:
+        - name: monitor
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          
+          # SECURITY_NOTE: Container security context
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          
+          # Load all non-secret env vars from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: {{ include "logsnare.configmapName" . }}
+          
+          env:
+            # Pod identity for leader election (using downward API)
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            
+            # =================================================================
+            # Database Credentials from Secrets
+            # =================================================================
+            {{- if .Values.connections.mongodb.enabled }}
+            {{- if .Values.connections.mongodb.username }}
+            - name: MONGODB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: mongodb-username
+            {{- end }}
+            {{- if .Values.connections.mongodb.password }}
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: mongodb-password
+            {{- end }}
+            {{- end }}
+            
+            {{- if .Values.connections.mysql.enabled }}
+            {{- if .Values.connections.mysql.username }}
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: mysql-username
+            {{- end }}
+            {{- if .Values.connections.mysql.password }}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: mysql-password
+            {{- end }}
+            {{- end }}
+            
+            {{- if .Values.connections.postgresql.enabled }}
+            {{- if .Values.connections.postgresql.username }}
+            - name: POSTGRESQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: postgresql-username
+            {{- end }}
+            {{- if .Values.connections.postgresql.password }}
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: postgresql-password
+            {{- end }}
+            {{- end }}
+            
+            {{- if .Values.connections.influxdb.enabled }}
+            {{- if .Values.connections.influxdb.token }}
+            - name: INFLUXDB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: influxdb-token
+            {{- end }}
+            {{- end }}
+            
+            {{- if .Values.connections.elasticsearch.enabled }}
+            {{- if .Values.connections.elasticsearch.username }}
+            - name: ELASTICSEARCH_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: elasticsearch-username
+            {{- end }}
+            {{- if .Values.connections.elasticsearch.password }}
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: elasticsearch-password
+            {{- end }}
+            {{- if .Values.connections.elasticsearch.apiKey }}
+            - name: ELASTICSEARCH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: elasticsearch-api-key
+            {{- end }}
+            {{- end }}
+            
+            {{- if .Values.connections.azure.enabled }}
+            # Azure Log Analytics Credentials
+            {{- if .Values.connections.azure.workspaceId }}
+            - name: AZURE_LOG_ANALYTICS_WORKSPACE_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: azure-workspace-id
+            {{- end }}
+            {{- if .Values.connections.azure.sharedKey }}
+            - name: AZURE_LOG_ANALYTICS_SHARED_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: azure-shared-key
+            {{- end }}
+            {{- end }}
+            
+            {{- if .Values.connections.gcp.enabled }}
+            # GCP Cloud Logging Configuration
+            # Note: If using Workload Identity, no credentials are mounted
+            # The GOOGLE_APPLICATION_CREDENTIALS env var is set in ConfigMap
+            {{- end }}
+            
+            {{- if .Values.connections.aws.enabled }}
+            # AWS CloudWatch Logs Credentials
+            {{- if .Values.connections.aws.accessKeyId }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: aws-access-key-id
+            {{- end }}
+            {{- if .Values.connections.aws.secretAccessKey }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: aws-secret-access-key
+            {{- end }}
+            {{- end }}
+          
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: logs
+              mountPath: /logs
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.sslCertificates.enabled }}
+            # SSL/TLS certificates for database connections
+            - name: ssl-certs
+              mountPath: {{ .Values.sslCertificates.mountPath | default "/certs" }}
+              readOnly: true
+            {{- end }}
+            {{- if and .Values.connections.gcp.enabled .Values.connections.gcp.serviceAccountKey }}
+            # GCP Service Account Key (when not using Workload Identity)
+            - name: gcp-credentials
+              mountPath: /secrets/gcp
+              readOnly: true
+            {{- end }}
+          
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "kill -0 1"
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "kill -0 1"
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+      
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "logsnare.configmapName" . }}
+        # Using emptyDir instead of PVC - logs are ephemeral
+        - name: logs
+          emptyDir:
+            {{- if .Values.storage.emptyDirSizeLimit }}
+            sizeLimit: {{ .Values.storage.emptyDirSizeLimit }}
+            {{- else }}
+            {}
+            {{- end }}
+        - name: tmp
+          emptyDir: {}
+        {{- if .Values.sslCertificates.enabled }}
+        # SSL/TLS certificates from Kubernetes secret
+        - name: ssl-certs
+          secret:
+            secretName: {{ .Values.sslCertificates.secretName | default "logsnare-db-certs" }}
+            defaultMode: 0400
+        {{- end }}
+        {{- if and .Values.connections.gcp.enabled .Values.connections.gcp.serviceAccountKey }}
+        # GCP Service Account Key (when not using Workload Identity)
+        - name: gcp-credentials
+          secret:
+            secretName: {{ include "logsnare.secretName" . }}
+            defaultMode: 0400
+            items:
+              - key: gcp-service-account-key
+                path: service-account.json
+        {{- end }}
+      
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

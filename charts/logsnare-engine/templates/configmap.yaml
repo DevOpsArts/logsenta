@@ -1,0 +1,239 @@
+# Logsnare - ConfigMap
+# Contains all non-secret configuration (env vars and config file)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "logsnare.configmapName" . }}
+  namespace: {{ include "logsnare.namespace" . }}
+  labels:
+    {{- include "logsnare.labels" . | nindent 4 }}
+    app.kubernetes.io/component: config
+data:
+  # ==========================================================================
+  # Environment Variables (all non-secret configuration)
+  # ==========================================================================
+  
+  # Core Configuration
+  CONFIG_PATH: "/config/monitor-config.yaml"
+  PYTHONUNBUFFERED: "1"
+  
+  # Storage Configuration
+  LOG_STORAGE_TYPE: {{ .Values.storage.type | quote }}
+  LOG_OUTPUT_DIR: {{ .Values.storage.outputDir | quote }}
+  
+  # Capture Window Configuration
+  BUFFER_DURATION_MINUTES: {{ .Values.captureWindow.bufferDurationMinutes | quote }}
+  CAPTURE_AFTER_MINUTES: {{ .Values.captureWindow.captureAfterMinutes | quote }}
+  
+  # Capture Mode Configuration
+  CAPTURE_ALL_LOGS: {{ .Values.captureMode.captureAllLogs | quote }}
+  CAPTURE_ALL_BATCH_SIZE: {{ .Values.captureMode.batchSize | quote }}
+  CAPTURE_ALL_BATCH_TIMEOUT: {{ .Values.captureMode.batchTimeoutSeconds | quote }}
+  
+  # Scalability Configuration
+  MAX_WORKER_THREADS: {{ .Values.scalability.maxWorkerThreads | default 20 | quote }}
+  LOG_BUFFER_SIZE: {{ .Values.scalability.logBufferSize | default 5000 | quote }}
+  BATCH_QUEUE_SIZE: {{ .Values.scalability.batchQueueSize | default 1000 | quote }}
+  BATCH_FLUSH_INTERVAL: {{ .Values.scalability.batchFlushInterval | default 5 | quote }}
+  RATE_LIMIT_PER_POD: {{ .Values.scalability.rateLimitPerPod | default 1000 | quote }}
+  RATE_BURST_PER_POD: {{ .Values.scalability.rateBurstPerPod | default 5000 | quote }}
+  
+  {{- if .Values.leaderElection.enabled }}
+  # Leader Election Configuration
+  LEADER_ELECTION_ENABLED: "true"
+  LEADER_ELECTION_LEASE_NAME: {{ .Values.leaderElection.leaseName | quote }}
+  LEADER_ELECTION_LEASE_DURATION: {{ .Values.leaderElection.leaseDurationSeconds | quote }}
+  LEADER_ELECTION_RENEW_DEADLINE: {{ .Values.leaderElection.renewDeadlineSeconds | quote }}
+  LEADER_ELECTION_RETRY_PERIOD: {{ .Values.leaderElection.retryPeriodSeconds | quote }}
+  {{- else }}
+  LEADER_ELECTION_ENABLED: "false"
+  {{- end }}
+  
+  # ==========================================================================
+  # Database Connection Configuration (non-secret values only)
+  # Credentials (username/password/token) are in Secrets
+  # ==========================================================================
+  
+  {{- if .Values.connections.mongodb.enabled }}
+  # MongoDB Configuration
+  MONGODB_HOST: {{ .Values.connections.mongodb.host | quote }}
+  MONGODB_PORT: {{ .Values.connections.mongodb.port | quote }}
+  MONGODB_DATABASE: {{ .Values.connections.mongodb.database | quote }}
+  MONGODB_COLLECTION: {{ .Values.connections.mongodb.collection | quote }}
+  MONGODB_AUTH_SOURCE: {{ .Values.connections.mongodb.authSource | quote }}
+  # MongoDB SSL/TLS Configuration
+  MONGODB_SSL_ENABLED: {{ .Values.connections.mongodb.ssl.enabled | default false | quote }}
+  {{- if .Values.connections.mongodb.ssl.enabled }}
+  MONGODB_SSL_CA_CERT: {{ .Values.connections.mongodb.ssl.caCert | default (printf "%s/mongo-ca.crt" (.Values.sslCertificates.mountPath | default "/certs")) | quote }}
+  {{- if .Values.connections.mongodb.ssl.clientCert }}
+  MONGODB_SSL_CLIENT_CERT: {{ .Values.connections.mongodb.ssl.clientCert | quote }}
+  {{- end }}
+  {{- if .Values.connections.mongodb.ssl.clientKey }}
+  MONGODB_SSL_CLIENT_KEY: {{ .Values.connections.mongodb.ssl.clientKey | quote }}
+  {{- end }}
+  MONGODB_SSL_ALLOW_INVALID_CERTS: {{ .Values.connections.mongodb.ssl.allowInvalidCertificates | default false | quote }}
+  MONGODB_SSL_ALLOW_INVALID_HOSTNAMES: {{ .Values.connections.mongodb.ssl.allowInvalidHostnames | default false | quote }}
+  {{- end }}
+  {{- end }}
+  
+  {{- if .Values.connections.mysql.enabled }}
+  # MySQL Configuration
+  MYSQL_HOST: {{ .Values.connections.mysql.host | quote }}
+  MYSQL_PORT: {{ .Values.connections.mysql.port | quote }}
+  MYSQL_DATABASE: {{ .Values.connections.mysql.database | quote }}
+  MYSQL_TABLE: {{ .Values.connections.mysql.table | quote }}
+  # MySQL SSL/TLS Configuration
+  MYSQL_SSL_ENABLED: {{ .Values.connections.mysql.ssl.enabled | default false | quote }}
+  {{- if .Values.connections.mysql.ssl.enabled }}
+  MYSQL_SSL_CA_CERT: {{ .Values.connections.mysql.ssl.caCert | default (printf "%s/mysql-ca.crt" (.Values.sslCertificates.mountPath | default "/certs")) | quote }}
+  {{- if .Values.connections.mysql.ssl.clientCert }}
+  MYSQL_SSL_CLIENT_CERT: {{ .Values.connections.mysql.ssl.clientCert | quote }}
+  {{- end }}
+  {{- if .Values.connections.mysql.ssl.clientKey }}
+  MYSQL_SSL_CLIENT_KEY: {{ .Values.connections.mysql.ssl.clientKey | quote }}
+  {{- end }}
+  MYSQL_SSL_VERIFY_CERT: {{ .Values.connections.mysql.ssl.verifyCert | default true | quote }}
+  MYSQL_SSL_VERIFY_IDENTITY: {{ .Values.connections.mysql.ssl.verifyIdentity | default true | quote }}
+  {{- end }}
+  {{- end }}
+  
+  {{- if .Values.connections.postgresql.enabled }}
+  # PostgreSQL Configuration
+  POSTGRESQL_HOST: {{ .Values.connections.postgresql.host | quote }}
+  POSTGRESQL_PORT: {{ .Values.connections.postgresql.port | quote }}
+  POSTGRESQL_DATABASE: {{ .Values.connections.postgresql.database | quote }}
+  POSTGRESQL_TABLE: {{ .Values.connections.postgresql.table | quote }}
+  # PostgreSQL SSL/TLS Configuration
+  POSTGRESQL_SSL_ENABLED: {{ .Values.connections.postgresql.ssl.enabled | default false | quote }}
+  POSTGRESQL_SSL_MODE: {{ .Values.connections.postgresql.ssl.mode | default "prefer" | quote }}
+  {{- if .Values.connections.postgresql.ssl.enabled }}
+  {{- if .Values.connections.postgresql.ssl.caCert }}
+  POSTGRESQL_SSL_CA_CERT: {{ .Values.connections.postgresql.ssl.caCert | quote }}
+  {{- end }}
+  {{- if .Values.connections.postgresql.ssl.clientCert }}
+  POSTGRESQL_SSL_CLIENT_CERT: {{ .Values.connections.postgresql.ssl.clientCert | quote }}
+  {{- end }}
+  {{- if .Values.connections.postgresql.ssl.clientKey }}
+  POSTGRESQL_SSL_CLIENT_KEY: {{ .Values.connections.postgresql.ssl.clientKey | quote }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+  
+  {{- if .Values.connections.influxdb.enabled }}
+  # InfluxDB Configuration
+  INFLUXDB_URL: {{ .Values.connections.influxdb.url | quote }}
+  INFLUXDB_ORG: {{ .Values.connections.influxdb.org | quote }}
+  INFLUXDB_BUCKET: {{ .Values.connections.influxdb.bucket | quote }}
+  # InfluxDB SSL/TLS Configuration
+  INFLUXDB_SSL_ENABLED: {{ .Values.connections.influxdb.ssl.enabled | default false | quote }}
+  INFLUXDB_SSL_VERIFY_CERTS: {{ .Values.connections.influxdb.ssl.verifyCerts | default true | quote }}
+  {{- if .Values.connections.influxdb.ssl.enabled }}
+  {{- if .Values.connections.influxdb.ssl.caCert }}
+  INFLUXDB_SSL_CA_CERT: {{ .Values.connections.influxdb.ssl.caCert | quote }}
+  {{- end }}
+  {{- if .Values.connections.influxdb.ssl.clientCert }}
+  INFLUXDB_SSL_CLIENT_CERT: {{ .Values.connections.influxdb.ssl.clientCert | quote }}
+  {{- end }}
+  {{- if .Values.connections.influxdb.ssl.clientKey }}
+  INFLUXDB_SSL_CLIENT_KEY: {{ .Values.connections.influxdb.ssl.clientKey | quote }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+  
+  {{- if .Values.connections.elasticsearch.enabled }}
+  # Elasticsearch/OpenSearch Configuration
+  ELASTICSEARCH_HOSTS: {{ .Values.connections.elasticsearch.hosts | quote }}
+  ELASTICSEARCH_INDEX: {{ .Values.connections.elasticsearch.index | quote }}
+  # Elasticsearch SSL/TLS Configuration
+  ELASTICSEARCH_SSL_ENABLED: {{ .Values.connections.elasticsearch.ssl.enabled | default false | quote }}
+  ELASTICSEARCH_SSL_VERIFY_CERTS: {{ .Values.connections.elasticsearch.ssl.verifyCerts | default true | quote }}
+  {{- if .Values.connections.elasticsearch.ssl.enabled }}
+  {{- if .Values.connections.elasticsearch.ssl.caCert }}
+  ELASTICSEARCH_SSL_CA_CERT: {{ .Values.connections.elasticsearch.ssl.caCert | quote }}
+  {{- end }}
+  {{- if .Values.connections.elasticsearch.ssl.clientCert }}
+  ELASTICSEARCH_SSL_CLIENT_CERT: {{ .Values.connections.elasticsearch.ssl.clientCert | quote }}
+  {{- end }}
+  {{- if .Values.connections.elasticsearch.ssl.clientKey }}
+  ELASTICSEARCH_SSL_CLIENT_KEY: {{ .Values.connections.elasticsearch.ssl.clientKey | quote }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+  
+  {{- if .Values.connections.azure.enabled }}
+  # Azure Log Analytics Configuration
+  # Note: Workspace ID and Shared Key are stored in Secrets
+  AZURE_LOG_ANALYTICS_LOG_TYPE: {{ .Values.connections.azure.logType | default "LogsnareK8sLogs" | quote }}
+  {{- if .Values.connections.azure.resourceId }}
+  AZURE_LOG_ANALYTICS_RESOURCE_ID: {{ .Values.connections.azure.resourceId | quote }}
+  {{- end }}
+  {{- end }}
+  
+  {{- if .Values.connections.gcp.enabled }}
+  # GCP Cloud Logging Configuration
+  # Note: Service Account Key (if used) is stored in Secrets
+  GCP_PROJECT_ID: {{ .Values.connections.gcp.projectId | quote }}
+  GCP_LOG_NAME: {{ .Values.connections.gcp.logName | default "logsnare" | quote }}
+  GCP_CLOUD_LOGGING_RESOURCE_TYPE: {{ .Values.connections.gcp.resourceType | default "k8s_container" | quote }}
+  {{- if .Values.connections.gcp.clusterName }}
+  GCP_CLOUD_LOGGING_CLUSTER_NAME: {{ .Values.connections.gcp.clusterName | quote }}
+  {{- end }}
+  {{- if .Values.connections.gcp.location }}
+  GCP_CLOUD_LOGGING_LOCATION: {{ .Values.connections.gcp.location | quote }}
+  {{- end }}
+  {{- if .Values.connections.gcp.credentialsPath }}
+  GOOGLE_APPLICATION_CREDENTIALS: {{ .Values.connections.gcp.credentialsPath | quote }}
+  {{- else if .Values.connections.gcp.serviceAccountKey }}
+  # Credentials mounted from secret
+  GOOGLE_APPLICATION_CREDENTIALS: "/secrets/gcp/service-account.json"
+  {{- end }}
+  {{- end }}
+  
+  {{- if .Values.connections.aws.enabled }}
+  # AWS CloudWatch Logs Configuration
+  # Note: Access Key and Secret Key (if used) are stored in Secrets
+  AWS_REGION: {{ .Values.connections.aws.region | quote }}
+  AWS_CLOUDWATCH_LOG_GROUP: {{ .Values.connections.aws.logGroup | quote }}
+  AWS_CLOUDWATCH_LOG_STREAM_PREFIX: {{ .Values.connections.aws.logStreamPrefix | default "logsnare" | quote }}
+  AWS_CLOUDWATCH_RETENTION_DAYS: {{ .Values.connections.aws.retentionDays | default 30 | quote }}
+  {{- end }}
+  
+  # ==========================================================================
+  # Application Config File (YAML format for Python app)
+  # ==========================================================================
+  monitor-config.yaml: |
+    # Logsnare Configuration
+    # ================================
+    
+    # ==========================================================
+    # CAPTURE MODE CONFIGURATION
+    # ==========================================================
+    # When capture_all_logs is true:
+    #   - ALL logs from monitored pods are captured
+    #   - Error patterns and error strings are IGNORED
+    #   - Useful for debugging or audit logging
+    # When capture_all_logs is false (default):
+    #   - Only logs around detected errors are captured
+    #   - Uses error_patterns and error_strings to detect errors
+    capture_all_logs: {{ .Values.captureMode.captureAllLogs | default false }}
+    
+    # List of namespaces to monitor
+    namespaces:
+      {{- range .Values.config.namespaces }}
+      - {{ . | quote }}
+      {{- end }}
+    
+    # Error patterns (regex supported) - ONLY USED when capture_all_logs is false
+    error_patterns:
+      {{- range .Values.config.errorPatterns }}
+      - {{ . | quote }}
+      {{- end }}
+    
+    # Plain string matches (case-insensitive) - ONLY USED when capture_all_logs is false
+    error_strings:
+      {{- range .Values.config.errorStrings }}
+      - {{ . | quote }}
+      {{- end }}
+    
+    # Output directory for captured logs
+    output_dir: {{ .Values.storage.outputDir | quote }}
