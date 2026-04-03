@@ -9,7 +9,7 @@ namespace:
 # Image configuration
 image:
   repository: devopsart1/logsnare-engine
-  tag: "0.2.1"
+  tag: "0.4.1"
   pullPolicy: IfNotPresent
 
 # Replica count
@@ -400,6 +400,202 @@ config:
     - "access denied"
     - "authentication failed"
     - "authorization failed"
+
+# =============================================================================
+# Alerting Configuration
+# =============================================================================
+# Send alerts via email or webhooks when error patterns are detected
+alerting:
+  # Enable/disable alerting globally
+  enabled: false
+  
+  # Threshold configuration - controls when alerts are triggered
+  threshold:
+    # Minimum number of occurrences before alerting
+    count: 2
+    # Time window in seconds (e.g., 300 = 5 minutes)
+    # Alert only if 'count' errors occur within this window
+    windowSeconds: 300
+    # Cooldown period in seconds before re-alerting for the same pattern
+    # Prevents alert fatigue from repeated errors
+    cooldownSeconds: 600
+    # Group alerts by namespace (recommended: true)
+    groupByNamespace: true
+    # Group alerts by pod (set true for per-pod alerting)
+    groupByPod: false
+  
+  # ==========================================================================
+  # Email Alerting Configuration
+  # ==========================================================================
+  email:
+    enabled: false
+    # SMTP server configuration
+    smtpHost: "smtp.gmail.com"
+    smtpPort: 587
+    # Use TLS (STARTTLS) - recommended for port 587
+    useTls: true
+    # Use SSL - for port 465
+    useSsl: false
+    # SMTP credentials (use secrets in production)
+    # REPLACE_ME: Set via --set or external secrets
+    username: ""
+    password: ""
+    # Sender email address
+    fromAddress: "logsnare-alerts@example.com"
+    # Recipient email addresses
+    toAddresses:
+      - "sre-team@example.com"
+      # - "oncall@example.com"
+  
+  # ==========================================================================
+  # Webhook Alerting Configuration
+  # ==========================================================================
+  # Multiple webhooks can be configured (Slack, Teams, PagerDuty, generic)
+  webhooks:
+    # Slack webhook example
+    - name: "slack"
+      enabled: false
+      # Webhook type: slack, teams, pagerduty, generic
+      type: "slack"
+      # Slack Incoming Webhook URL
+      # REPLACE_ME: Set your Slack webhook URL
+      url: ""
+      # Request timeout in seconds
+      timeout: 30
+      # Verify SSL certificate
+      verifySsl: true
+      # Additional headers (optional)
+      headers: {}
+    
+    # Microsoft Teams webhook example
+    - name: "teams"
+      enabled: false
+      type: "teams"
+      # Teams Incoming Webhook URL
+      # REPLACE_ME: Set your Teams webhook URL
+      url: ""
+      timeout: 30
+      verifySsl: true
+      headers: {}
+    
+    # PagerDuty webhook example
+    - name: "pagerduty"
+      enabled: false
+      type: "pagerduty"
+      # PagerDuty Events API v2 endpoint or Integration Key
+      # REPLACE_ME: Set your PagerDuty integration key
+      url: "https://events.pagerduty.com/v2/enqueue"
+      timeout: 30
+      verifySsl: true
+      headers:
+        # Add routing key as header or in URL
+        # X-Routing-Key: "YOUR_ROUTING_KEY"
+    
+    # Generic webhook example (custom endpoint)
+    - name: "generic"
+      enabled: false
+      type: "generic"
+      # Your custom webhook endpoint
+      # REPLACE_ME: Set your webhook URL
+      url: ""
+      timeout: 30
+      verifySsl: true
+      # Custom headers (e.g., authentication)
+      headers:
+        # Authorization: "Bearer YOUR_TOKEN"
+        # X-Custom-Header: "value"
+  
+  # ==========================================================================
+  # Pattern-Based Alert Rules (Advanced)
+  # ==========================================================================
+  # Define custom rules to route specific error patterns to different
+  # recipients with different thresholds. If rules are defined, they take
+  # precedence over the global threshold/email/webhooks above.
+  #
+  # Each rule can have:
+  # - patterns: List of regex/string patterns to match
+  # - threshold: Custom threshold for this rule
+  # - email: Rule-specific email recipients
+  # - webhooks: List of webhook names to trigger
+  # - namespaces: Limit rule to specific namespaces (optional)
+  rules: []
+  # Example rules configuration:
+  # rules:
+  #   # Critical errors - immediate PagerDuty alert
+  #   - name: "critical-errors"
+  #     patterns:
+  #       - "CRITICAL"
+  #       - "FATAL"
+  #       - "OOMKilled"
+  #       - "panic:"
+  #     threshold:
+  #       count: 1              # Alert on first occurrence
+  #       windowSeconds: 60
+  #       cooldownSeconds: 300
+  #     email:
+  #       enabled: true
+  #       toAddresses:
+  #         - "oncall@example.com"
+  #         - "sre-critical@example.com"
+  #     webhooks:
+  #       - "pagerduty"
+  #       - "slack"
+  #   
+  #   # Application exceptions - notify dev team
+  #   - name: "java-exceptions"
+  #     patterns:
+  #       - "NullPointerException"
+  #       - "IllegalArgumentException"
+  #       - "at\\s+[\\w.$]+\\([\\w]+\\.java:\\d+\\)"
+  #     threshold:
+  #       count: 3              # Alert after 3 occurrences
+  #       windowSeconds: 300    # Within 5 minutes
+  #       cooldownSeconds: 600
+  #     email:
+  #       enabled: true
+  #       toAddresses:
+  #         - "java-team@example.com"
+  #     webhooks:
+  #       - "slack"
+  #     namespaces:           # Only for these namespaces
+  #       - "production"
+  #       - "staging"
+  #   
+  #   # Python errors - notify Python team
+  #   - name: "python-errors"
+  #     patterns:
+  #       - "Traceback"
+  #       - "File\\s+\"[^\"]+\",\\s+line\\s+\\d+"
+  #       - "TypeError"
+  #       - "ValueError"
+  #     threshold:
+  #       count: 2
+  #       windowSeconds: 300
+  #       cooldownSeconds: 600
+  #     email:
+  #       enabled: true
+  #       toAddresses:
+  #         - "python-team@example.com"
+  #     webhooks:
+  #       - "teams"
+  #   
+  #   # Database connection errors - DBA team
+  #   - name: "database-errors"
+  #     patterns:
+  #       - "ConnectionRefused"
+  #       - "connection timeout"
+  #       - "database.*unavailable"
+  #       - "SQLSTATE"
+  #     threshold:
+  #       count: 2
+  #       windowSeconds: 120    # 2 minutes
+  #       cooldownSeconds: 300
+  #     email:
+  #       enabled: true
+  #       toAddresses:
+  #         - "dba-team@example.com"
+  #     webhooks:
+  #       - "pagerduty"
 
 # Probes configuration
 probes:

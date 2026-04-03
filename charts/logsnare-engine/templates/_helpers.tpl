@@ -86,10 +86,10 @@ Create configmap name
 {{- end }}
 
 {{/*
-Check if any database connection is enabled
+Check if any database connection or alerting is enabled (requires secrets)
 */}}
 {{- define "logsnare.secretsEnabled" -}}
-{{- if or .Values.connections.mongodb.enabled .Values.connections.mysql.enabled .Values.connections.postgresql.enabled .Values.connections.influxdb.enabled .Values.connections.elasticsearch.enabled .Values.connections.azure.enabled .Values.connections.gcp.enabled .Values.connections.aws.enabled }}
+{{- if or .Values.connections.mongodb.enabled .Values.connections.mysql.enabled .Values.connections.postgresql.enabled .Values.connections.influxdb.enabled .Values.connections.elasticsearch.enabled .Values.connections.azure.enabled .Values.connections.gcp.enabled .Values.connections.aws.enabled .Values.alerting.enabled }}
 {{- true }}
 {{- end }}
 {{- end }}

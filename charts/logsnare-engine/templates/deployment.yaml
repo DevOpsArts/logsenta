@@ -192,6 +192,41 @@ spec:
                   key: aws-secret-access-key
             {{- end }}
             {{- end }}
+            
+            # =================================================================
+            # Alerting Credentials from Secrets
+            # =================================================================
+            {{- if .Values.alerting.enabled }}
+            {{- if .Values.alerting.email.enabled }}
+            {{- if .Values.alerting.email.username }}
+            - name: ALERTING_SMTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: alerting-smtp-username
+            {{- end }}
+            {{- if .Values.alerting.email.password }}
+            - name: ALERTING_SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" . }}
+                  key: alerting-smtp-password
+            {{- end }}
+            {{- end }}
+            
+            {{- if .Values.alerting.webhooks }}
+            # Webhook URLs from Secrets
+            {{- range .Values.alerting.webhooks }}
+            {{- if and .enabled .url }}
+            - name: ALERTING_WEBHOOK_{{ .name | upper | replace "-" "_" }}_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "logsnare.secretName" $ }}
+                  key: alerting-webhook-{{ .name }}-url
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
           
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

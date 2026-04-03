@@ -2,13 +2,14 @@ apiVersion: v2
 name: logsnare-engine
 description: A Kubernetes log monitoring agent that captures error logs and stores them in various backends
 type: application
-version: 1.1.0
-appVersion: "0.2.1"
+version: 1.3.0
+appVersion: "0.4.0"
 keywords:
   - monitoring
   - logging
   - kubernetes
   - error-tracking
+  - alerting
 maintainers:
   - name: DevOpsArts
     url: https://github.com/devopsarts

@@ -199,6 +199,42 @@ data:
   {{- end }}
   
   # ==========================================================================
+  # ALERTING CONFIGURATION
+  # ==========================================================================
+  {{- if .Values.alerting.enabled }}
+  ALERTING_ENABLED: "true"
+  
+  # Threshold Configuration
+  ALERTING_THRESHOLD_COUNT: {{ .Values.alerting.threshold.count | default 2 | quote }}
+  ALERTING_THRESHOLD_WINDOW_SECONDS: {{ .Values.alerting.threshold.windowSeconds | default 300 | quote }}
+  ALERTING_THRESHOLD_COOLDOWN_SECONDS: {{ .Values.alerting.threshold.cooldownSeconds | default 600 | quote }}
+  ALERTING_GROUP_BY_NAMESPACE: {{ .Values.alerting.threshold.groupByNamespace | default true | quote }}
+  ALERTING_GROUP_BY_POD: {{ .Values.alerting.threshold.groupByPod | default false | quote }}
+  
+  {{- if .Values.alerting.email.enabled }}
+  # Email Configuration
+  ALERTING_EMAIL_ENABLED: "true"
+  ALERTING_EMAIL_SMTP_HOST: {{ .Values.alerting.email.smtpHost | quote }}
+  ALERTING_EMAIL_SMTP_PORT: {{ .Values.alerting.email.smtpPort | default 587 | quote }}
+  ALERTING_EMAIL_USE_TLS: {{ .Values.alerting.email.useTls | default true | quote }}
+  ALERTING_EMAIL_FROM: {{ .Values.alerting.email.fromAddress | quote }}
+  ALERTING_EMAIL_TO: {{ .Values.alerting.email.toAddresses | join "," | quote }}
+  {{- if .Values.alerting.email.ccAddresses }}
+  ALERTING_EMAIL_CC: {{ .Values.alerting.email.ccAddresses | join "," | quote }}
+  {{- end }}
+  ALERTING_EMAIL_SUBJECT_PREFIX: {{ .Values.alerting.email.subjectPrefix | default "[Logsnare Alert]" | quote }}
+  # Note: SMTP Username and Password are stored in Secrets
+  {{- end }}
+  
+  {{- if .Values.alerting.webhooks }}
+  # Webhook Configuration (JSON format)
+  ALERTING_WEBHOOKS_CONFIG: {{ .Values.alerting.webhooks | toJson | quote }}
+  {{- end }}
+  {{- else }}
+  ALERTING_ENABLED: "false"
+  {{- end }}
+  
+  # ==========================================================================
   # Application Config File (YAML format for Python app)
   # ==========================================================================
   monitor-config.yaml: |
@@ -237,3 +273,101 @@ data:
     
     # Output directory for captured logs
     output_dir: {{ .Values.storage.outputDir | quote }}
+    
+    # ==========================================================
+    # ALERTING CONFIGURATION
+    # ==========================================================
+    alerting:
+      enabled: {{ .Values.alerting.enabled | default false }}
+      threshold:
+        count: {{ .Values.alerting.threshold.count | default 2 }}
+        window_seconds: {{ .Values.alerting.threshold.windowSeconds | default 300 }}
+        cooldown_seconds: {{ .Values.alerting.threshold.cooldownSeconds | default 600 }}
+        group_by_namespace: {{ .Values.alerting.threshold.groupByNamespace | default true }}
+        group_by_pod: {{ .Values.alerting.threshold.groupByPod | default false }}
+      {{- if .Values.alerting.email.enabled }}
+      email:
+        enabled: true
+        smtp_host: {{ .Values.alerting.email.smtpHost | quote }}
+        smtp_port: {{ .Values.alerting.email.smtpPort | default 587 }}
+        use_tls: {{ .Values.alerting.email.useTls | default true }}
+        from_address: {{ .Values.alerting.email.fromAddress | quote }}
+        to_addresses:
+          {{- range .Values.alerting.email.toAddresses }}
+          - {{ . | quote }}
+          {{- end }}
+        {{- if .Values.alerting.email.ccAddresses }}
+        cc_addresses:
+          {{- range .Values.alerting.email.ccAddresses }}
+          - {{ . | quote }}
+          {{- end }}
+        {{- end }}
+        subject_prefix: {{ .Values.alerting.email.subjectPrefix | default "[Logsnare Alert]" | quote }}
+      {{- end }}
+      {{- if .Values.alerting.webhooks }}
+      webhooks:
+        {{- range .Values.alerting.webhooks }}
+        - name: {{ .name | quote }}
+          type: {{ .type | quote }}
+          enabled: {{ .enabled | default false }}
+          {{- if .channel }}
+          channel: {{ .channel | quote }}
+          {{- end }}
+          {{- if .mention }}
+          mention: {{ .mention | quote }}
+          {{- end }}
+          {{- if .routingKey }}
+          routing_key: {{ .routingKey | quote }}
+          {{- end }}
+          {{- if .severity }}
+          severity: {{ .severity | quote }}
+          {{- end }}
+          {{- if .headers }}
+          headers:
+            {{- range $key, $value := .headers }}
+            {{ $key }}: {{ $value | quote }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.alerting.rules }}
+      # Pattern-based alert rules
+      rules:
+        {{- range .Values.alerting.rules }}
+        - name: {{ .name | quote }}
+          patterns:
+            {{- range .patterns }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- if .threshold }}
+          threshold:
+            count: {{ .threshold.count | default 1 }}
+            window_seconds: {{ .threshold.windowSeconds | default 300 }}
+            cooldown_seconds: {{ .threshold.cooldownSeconds | default 600 }}
+            group_by_namespace: {{ .threshold.groupByNamespace | default true }}
+            group_by_pod: {{ .threshold.groupByPod | default false }}
+          {{- end }}
+          {{- if .email }}
+          email:
+            enabled: {{ .email.enabled | default false }}
+            {{- if .email.toAddresses }}
+            to_addresses:
+              {{- range .email.toAddresses }}
+              - {{ . | quote }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if .webhooks }}
+          webhooks:
+            {{- range .webhooks }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if .namespaces }}
+          namespaces:
+            {{- range .namespaces }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
