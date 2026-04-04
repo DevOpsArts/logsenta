@@ -4,12 +4,13 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.1.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| 1.4.x   | :white_check_mark: |
+| 1.3.x   | :white_check_mark: |
+| < 1.3   | :x:                |
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability within Logsnare, please send an email to security@devopsarts.io. All security vulnerabilities will be promptly addressed.
+If you discover a security vulnerability within Logsnare, please send an email to devopsarts@gmail.com. All security vulnerabilities will be promptly addressed.
 
 Please include the following information:
 - Type of vulnerability
