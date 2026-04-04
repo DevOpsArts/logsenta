@@ -94,6 +94,9 @@ containerSecurityContext:
 # Setting the type automatically enables the corresponding connection configuration.
 # Configure credentials in the connections.<backend> section below.
 storage:
+  # Enable/disable storage backend. When disabled, Logsnare only monitors and alerts.
+  # Useful for "monitor + alert only" mode without persisting logs to storage.
+  enabled: true
   type: "postgresql"
   # Output directory for file storage (uses emptyDir)
   outputDir: "/logs"
