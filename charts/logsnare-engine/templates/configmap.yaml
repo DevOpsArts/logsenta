@@ -18,7 +18,7 @@ data:
   PYTHONUNBUFFERED: "1"
   
   # Storage Configuration
-  STORAGE_ENABLED: {{ .Values.storage.enabled | default true | quote }}
+  STORAGE_ENABLED: {{ if eq (toString .Values.storage.enabled) "false" }}"false"{{ else }}"true"{{ end }}
   LOG_STORAGE_TYPE: {{ .Values.storage.type | quote }}
   LOG_OUTPUT_DIR: {{ .Values.storage.outputDir | quote }}
   
