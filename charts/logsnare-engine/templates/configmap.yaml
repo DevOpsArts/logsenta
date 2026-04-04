@@ -76,8 +76,8 @@ data:
   {{- end }}
   {{- end }}
   
-  {{- if .Values.connections.mysql.enabled }}
-  # MySQL Configuration
+  {{- if or .Values.connections.mysql.enabled (eq .Values.storage.type "mysql") }}
+  # MySQL Configuration (auto-enabled when storage.type=mysql)
   MYSQL_HOST: {{ .Values.connections.mysql.host | quote }}
   MYSQL_PORT: {{ .Values.connections.mysql.port | quote }}
   MYSQL_DATABASE: {{ .Values.connections.mysql.database | quote }}
@@ -97,8 +97,8 @@ data:
   {{- end }}
   {{- end }}
   
-  {{- if .Values.connections.postgresql.enabled }}
-  # PostgreSQL Configuration
+  {{- if or .Values.connections.postgresql.enabled (eq .Values.storage.type "postgresql") }}
+  # PostgreSQL Configuration (auto-enabled when storage.type=postgresql)
   POSTGRESQL_HOST: {{ .Values.connections.postgresql.host | quote }}
   POSTGRESQL_PORT: {{ .Values.connections.postgresql.port | quote }}
   POSTGRESQL_DATABASE: {{ .Values.connections.postgresql.database | quote }}

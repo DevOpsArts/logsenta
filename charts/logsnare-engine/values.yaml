@@ -87,7 +87,12 @@ containerSecurityContext:
     drop:
       - ALL
 
+# =============================================================================
+# Storage Configuration
+# =============================================================================
 # Log storage type: file, mongodb, mysql, postgresql, influxdb, elasticsearch, azure, gcp, aws
+# Setting the type automatically enables the corresponding connection configuration.
+# Configure credentials in the connections.<backend> section below.
 storage:
   type: "postgresql"
   # Output directory for file storage (uses emptyDir)
@@ -151,13 +156,15 @@ connections:
       allowInvalidHostnames: false
 
   # MySQL connection configuration
+  # NOTE: Set storage.type=mysql to use MySQL backend. Connection is auto-enabled.
+  # The 'enabled' flag can be used to explicitly control config injection.
   mysql:
     enabled: false
-    host: "mysql.database.svc.cluster.local"
-    port: "3306"
+    host: "mysql.logsnare.svc.cluster.local"
+    port: 3306
     database: "k8s_logs"
     table: "error_logs"
-    # REPLACE_ME: Set actual credentials
+    # SECURITY: Set credentials via --set or external secrets
     username: ""
     password: ""
     # SSL/TLS Configuration
@@ -175,10 +182,12 @@ connections:
       verifyIdentity: true
 
   # PostgreSQL connection configuration
+  # NOTE: Set storage.type=postgresql to use PostgreSQL backend. Connection is auto-enabled.
+  # The 'enabled' flag can be used to explicitly control config injection.
   postgresql:
     enabled: true
     host: "postgresql.logsnare.svc.cluster.local"
-    port: "5432"
+    port: 5432
     database: "k8s_logs"
     table: "error_logs"
     # SECURITY: Set credentials via --set or external secrets
