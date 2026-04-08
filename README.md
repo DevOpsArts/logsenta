@@ -79,7 +79,7 @@ helm install logsenta-engine ./charts/logsenta-engine \
 |-----------|-------------|---------|
 | `replicaCount` | Number of replicas | `1` |
 | `image.repository` | Image repository | `devopsart1/logsenta-engine` |
-| `image.tag` | Image tag | `0.4.2` |
+| `image.tag` | Image tag | `0.4.3` |
 | `storage.type` | Storage backend type | `file` |
 | `monitoring.namespaces` | Namespaces to monitor | `["default", "kube-system"]` |
 | `scalability.maxWorkers` | Max concurrent pod monitors | `20` |

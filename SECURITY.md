@@ -147,7 +147,7 @@ connections:
 ```yaml
 image:
   repository: devopsart1/logsenta-engine
-  tag: "0.4.2"  # Specific version, not "latest"
+  tag: "0.4.3"  # Specific version, not "latest"
   pullPolicy: IfNotPresent
 ```
 
