@@ -25,7 +25,7 @@
     <line x1="45" y1="140" x2="75" y2="140"/>
   </g>
   
-  <!-- Snare/Net capturing logs -->
+  <!-- Senta/Net capturing logs -->
   <path d="M 110 45 
            Q 155 55, 155 100 
            Q 155 145, 110 155
@@ -53,6 +53,6 @@
     <line x1="75" y1="140" x2="110" y2="140" opacity="0.8"/>
   </g>
   
-  <!-- Arrow pointing into snare -->
+  <!-- Arrow pointing into senta -->
   <polygon points="100,90 100,110 120,100" fill="#10B981"/>
 </svg>

@@ -19,7 +19,7 @@
     <line x1="16" y1="42" x2="30" y2="42"/>
   </g>
   
-  <!-- Snare capture effect -->
+  <!-- Senta capture effect -->
   <g stroke="#10B981" stroke-width="3" stroke-linecap="round" fill="none">
     <path d="M 32 22 Q 48 22, 48 32 Q 48 42, 32 42"/>
     <line x1="32" y1="22" x2="45" y2="22"/>
