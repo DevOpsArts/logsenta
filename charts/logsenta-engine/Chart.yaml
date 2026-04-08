@@ -2,8 +2,8 @@ apiVersion: v2
 name: logsenta-engine
 description: A Kubernetes log monitoring agent that captures error logs and stores them in various backends
 type: application
-version: 1.4.0
-appVersion: "0.4.2"
+version: 1.5.0
+appVersion: "0.4.3"
 keywords:
   - monitoring
   - logging

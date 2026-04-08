@@ -1,13 +1,17 @@
 # Logsenta-Engine Helm Chart Values
 # ==================================
 
+# Name overrides
+# nameOverride: ""  # Override the chart name
+fullnameOverride: logsenta-engine  # Override the full release name (prevents logsenta-logsenta-engine)
+
 # Namespace configuration
 namespace:
   create: true
   name: logsenta
 
 # Image configuration
-# NOTE: If tag is empty, defaults to Chart.AppVersion (currently 0.4.2)
+# NOTE: If tag is empty, defaults to Chart.AppVersion (currently 0.4.3)
 image:
   repository: devopsart1/logsenta-engine
   tag: ""  # Empty = uses appVersion from Chart.yaml
